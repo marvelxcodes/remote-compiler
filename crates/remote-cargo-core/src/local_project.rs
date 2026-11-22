@@ -2,9 +2,8 @@ use cargo_metadata::MetadataCommand;
 use cargo_metadata::camino::{Utf8Path, Utf8PathBuf};
 
 use crate::RemoteCargoError;
+use crate::remote_cache::REMOTE_WORKSPACES_DIRECTORY;
 use crate::utils::remote_directory_name::remote_directory_name;
-
-const REMOTE_WORKSPACES_DIRECTORY: &str = ".cache/remote-cargo";
 
 pub struct LocalProject {
     pub workspace_root: Utf8PathBuf,

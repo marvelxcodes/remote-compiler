@@ -75,6 +75,24 @@ cargo-remote build
 
 To use local `cargo` for one command, type `command cargo run`.
 
+## Server storage
+
+The server keeps one folder for each project in `~/.cache/remote-cargo/`. The folder name is the local project path, with `/` changed to `_`. For example, `/e/Projects/api` becomes `e_Projects_api`. Each folder contains a copy of the source and the full `target/` build cache.
+
+Use these commands to control the server storage:
+
+| Command | Result |
+| --- | --- |
+| `cargo clean [cargo args]` | Cleans the current project on the server and the local binaries. It accepts the usual `cargo clean` arguments, for example `--release` or `-p <package>`. |
+| `cargo clear` | Deletes the build cache of all projects on the server. The source copies stay, so the next build does not upload everything again. |
+| `cargo space` | Shows the disk space that each project uses on the server, and the total. |
+| `cargo prune` | Deletes all projects from the server (source and build cache). |
+| `cargo prune <project-name>` | Deletes one project from the server. Use the folder name from `cargo space`, or only the last part of it (for example `api`). If more than one project has that name, use the full folder name. |
+
+All these operations are safe. The next `cargo run` uploads the source again and builds the project again.
+
+When you move or rename a project locally, the server gets a new folder. Use `cargo space` to find old folders, and `cargo prune <project-name>` to delete them.
+
 ## Configuration
 
 `REMOTE_CARGO_HOST`: SSH destination of the build server, for example `user@100.64.0.10`. 

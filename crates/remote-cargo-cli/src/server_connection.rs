@@ -14,11 +14,21 @@ pub fn connect_or_run_locally(
         Ok(session) => format!("cannot connect to {}", session.destination()),
         Err(error) => error.to_string(),
     };
-    eprintln!("cargo-remote: {reason}, building locally");
+    eprintln!("cargo-remote: {reason}, using local cargo");
     match replace_process_with_local_cargo(subcommand, arguments)? {}
 }
 
-fn replace_process_with_local_cargo(
+pub fn connect() -> anyhow::Result<SshSession> {
+    let session = SshSession::from_environment()?;
+    anyhow::ensure!(
+        session.is_reachable(),
+        "cannot connect to {}",
+        session.destination()
+    );
+    Ok(session)
+}
+
+pub fn replace_process_with_local_cargo(
     subcommand: &str,
     arguments: &[String],
 ) -> anyhow::Result<Infallible> {

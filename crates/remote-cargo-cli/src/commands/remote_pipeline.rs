@@ -3,7 +3,7 @@ use remote_cargo_core::remote_build::{RemoteBuild, build_remotely};
 use remote_cargo_core::source_sync::upload_sources;
 use remote_cargo_core::ssh_session::SshSession;
 
-use crate::local_fallback::connect_or_run_locally;
+use crate::server_connection::connect_or_run_locally;
 use crate::utils::stage_timer::timed_stage;
 
 pub struct RemotePipeline {

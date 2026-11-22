@@ -44,6 +44,15 @@ pub enum RemoteCargoError {
         target_directory: Utf8PathBuf,
     },
 
+    #[error("no project matching `{0}` is on the server, use `cargo space` to list projects")]
+    ProjectNotFound(String),
+
+    #[error("more than one project matches `{project_query}`: {matches}")]
+    AmbiguousProject {
+        project_query: String,
+        matches: String,
+    },
+
     #[error("the build produced no executable to run")]
     NoExecutable,
 
