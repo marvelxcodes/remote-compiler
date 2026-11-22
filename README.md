@@ -1,43 +1,9 @@
-# remote-compiler
+# Remote Compiler for Rust
 
 `cargo-remote` compiles your Rust projects on a remote Linux server and runs the binaries on your local machine.
 
 Type `cargo run` or `cargo build` as usual. The tool sends the source to the server, compiles it there, and copies only the executables back. The full build cache (`target/`) stays on the server.
 
-## How it works
-
-```
-local machine                                   build server
-─────────────                                   ────────────
-cargo run --release -- args
-  │
-  ├─ 1. rsync source  ───────────────────────▶  ~/.cache/remote-cargo/<project>/
-  │     (no target/, .git/, gitignored files)
-  │
-  ├─ 2. ssh: cargo build --release  ─────────▶  compiles, keeps target/ cache
-  │     (diagnostics stream back to you)
-  │
-  ├─ 3. rsync executable  ◀──────────────────   target/release/<bin>
-  │     into local target/release/<bin>
-  │
-  └─ 4. exec <bin> args   (runs locally)
-```
-
-- The server reads your synced `Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml` and `.cargo/config.toml`. When you change them locally, the next run recompiles with the new settings.
-- All `ssh` and `rsync` calls share one multiplexed connection. A run with no changes takes less than one second of overhead.
-- If the server is not available, the tool shows a warning and runs the local `cargo` instead.
-- Only `run` and `build` go to the server. All other commands (`check`, `test`, `clippy`) run locally.
-
-## Tech stack
-
-| Part | Technology |
-| --- | --- |
-| Language | Rust (edition 2024), Cargo workspace |
-| Library crate | `remote-cargo-core`: [`cargo_metadata`](https://crates.io/crates/cargo_metadata) for workspace metadata and JSON build messages, [`thiserror`](https://crates.io/crates/thiserror) for errors |
-| CLI crate | `remote-cargo-cli` (binary `cargo-remote`): [`anyhow`](https://crates.io/crates/anyhow) for errors |
-| Transport | OpenSSH (with `ControlMaster` connection sharing) and `rsync` (delta transfer, compression) |
-| Network | Any SSH route. Tested with [Tailscale](https://tailscale.com). |
-| Shell integration | fish function that wraps `cargo` |
 
 ## Requirements
 
@@ -111,33 +77,7 @@ To use local `cargo` for one command, type `command cargo run`.
 
 ## Configuration
 
-| Variable | Description |
-| --- | --- |
-| `REMOTE_CARGO_HOST` | SSH destination of the build server, for example `user@100.64.0.10`. If it is not set, `run` and `build` use the local `cargo`. |
-| `REMOTE_CARGO_VERBOSE` | Set to any value to show the duration of each stage (connect, upload, remote build, download). |
+`REMOTE_CARGO_HOST`: SSH destination of the build server, for example `user@100.64.0.10`. 
+(If it is not set, `run` and `build` use the local `cargo`)
 
-## Known limitations
-
-- The tool does not upload gitignored files (for example `.env` or generated code) or `.git/`.
-- Path dependencies outside the workspace root are not uploaded. The tool stops with an error.
-- Compile-time paths (`file!()`, `env!("CARGO_MANIFEST_DIR")`, panic locations) show server paths. At runtime, `CARGO_MANIFEST_DIR` and `CARGO_PKG_*` contain the local values.
-- Dynamically linked system libraries (for example `libssl`) must also be installed locally. Use `ldd target/release/<bin>` to make sure.
-- `--manifest-path` with a local absolute path does not work.
-
-## Project layout
-
-```
-crates/
-  remote-cargo-core/      library: ssh session, source sync, remote build, artifact download
-    src/utils/            shell quoting, remote directory names
-  remote-cargo-cli/       binary cargo-remote: argument parsing, run/build/setup commands, local fallback
-shell/remote-cargo.fish   fish wrapper for cargo
-```
-
-## Development
-
-```sh
-cargo fmt --all -- --check
-cargo clippy --workspace --all-targets -- -D warnings
-cargo test --workspace
-```
+`REMOTE_CARGO_VERBOSE`: Set to any value to show the duration of each stage (connect, upload, remote build, download).
