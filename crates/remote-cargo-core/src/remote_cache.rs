@@ -6,6 +6,8 @@ use crate::utils::shell_quote::{shell_join, shell_quote};
 
 pub(crate) const REMOTE_WORKSPACES_DIRECTORY: &str = ".cache/remote-cargo";
 
+const CARGO_TARGET_DIRECTORY_MARKER: &str = "CACHEDIR.TAG";
+
 const LOAD_CARGO_ENVIRONMENT: &str = r#"[ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env""#;
 
 pub fn clean_project(
@@ -25,11 +27,10 @@ pub fn clean_project(
 
 pub fn clear_build_caches(session: &SshSession) -> Result<(), RemoteCargoError> {
     let script = format!(
-        r#"{LOAD_CARGO_ENVIRONMENT}; cd {REMOTE_WORKSPACES_DIRECTORY} 2>/dev/null || exit 0
-        for project in */; do
-            [ -d "$project" ] || continue
-            echo "clearing ${{project%/}}" >&2
-            (cd "$project" && cargo clean --quiet 2>/dev/null) || rm -rf "${{project}}target"
+        r#"cd {REMOTE_WORKSPACES_DIRECTORY} 2>/dev/null || exit 0
+        find . -name {CARGO_TARGET_DIRECTORY_MARKER} -type f -printf '%h\n' | while read -r target_directory; do
+            echo "clearing ${{target_directory#./}}" >&2
+            rm -rf -- "$target_directory"
         done"#
     );
     run_to_completion(&mut session.remote_command(&script), "remote cache clear")

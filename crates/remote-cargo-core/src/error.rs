@@ -29,14 +29,10 @@ pub enum RemoteCargoError {
     WorkingDirectoryOutsideWorkspace(String),
 
     #[error(
-        "path dependency `{dependency_name}` at {dependency_path} is outside the workspace root \
-         {workspace_root} and is not synced to the server"
+        "the path dependencies of {workspace_root} have no common folder other than /, \
+         so they cannot be synced to the server"
     )]
-    PathDependencyOutsideWorkspace {
-        dependency_name: String,
-        dependency_path: Utf8PathBuf,
-        workspace_root: Utf8PathBuf,
-    },
+    NoCommonSourceDirectory { workspace_root: Utf8PathBuf },
 
     #[error("executable {executable} is outside the remote target directory {target_directory}")]
     ExecutableOutsideTargetDirectory {

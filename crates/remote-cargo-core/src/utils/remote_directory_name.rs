@@ -1,7 +1,7 @@
 use cargo_metadata::camino::Utf8Path;
 
-pub fn remote_directory_name(local_workspace_root: &Utf8Path) -> String {
-    local_workspace_root
+pub fn remote_directory_name(local_source_root: &Utf8Path) -> String {
+    local_source_root
         .as_str()
         .trim_start_matches('/')
         .chars()

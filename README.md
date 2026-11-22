@@ -91,6 +91,14 @@ Use these commands to control the server storage:
 
 All these operations are safe. The next `cargo run` uploads the source again and builds the project again.
 
+### Path dependencies outside the project
+
+A project can use path dependencies outside its workspace, for example `path = "../shared-lib"`. Then the server folder is the nearest folder that contains the project and all of these dependencies. For each dependency, `cargo-remote` uploads its Cargo workspace (or only the package, if it is not in a workspace). It also uploads `rust-toolchain.toml`, `rust-toolchain` and `.cargo/config.toml` from the shared folder. It does not upload other files from the shared folder.
+
+Example: `/e/os/bar` uses `../ui/crates/view`. The server folder is `e_os`, and it contains `bar/` and `ui/`. All projects in `/e/os` use the same server folder, so they share the uploaded source. Each project keeps its own `target/`.
+
+The dependencies must have a common folder other than `/`. To find them, `cargo-remote` runs `cargo metadata` on the local machine. Thus, the first run can download the sources of the crates.io dependencies to the local machine.
+
 When you move or rename a project locally, the server gets a new folder. Use `cargo space` to find old folders, and `cargo prune <project-name>` to delete them.
 
 ## Configuration
